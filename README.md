@@ -1,6 +1,7 @@
 # Photo Profiler
 
 Ai yapping commence
+
 A simple Windows app that shows how you use your camera. Choose photo folders and graph aperture, shutter speed, ISO, focal length, orientation, and aspect ratio.
 
 **[Download Photo Profiler 1.13](https://github.com/chu282/Photo-Profiler/releases/download/v1.13/Photo-Profiler-Setup-1.13.exe)**
