@@ -1,5 +1,6 @@
 # Photo Profiler
 
+Ai yapping commence
 A simple Windows app that shows how you use your camera. Choose photo folders and graph aperture, shutter speed, ISO, focal length, orientation, and aspect ratio.
 
 **[Download Photo Profiler 1.13](https://github.com/chu282/Photo-Profiler/releases/download/v1.13/Photo-Profiler-Setup-1.13.exe)**
@@ -19,11 +20,3 @@ For 64-bit Windows. No Python installation is needed.
 - Zoom with the mouse wheel: up to zoom in, down to zoom out. Double-click a chart to reset.
 - Right-click a bar to see its photos. Double-click a filename to open it, or right-click for folder and copy options.
 - Export your charts as a high-resolution PNG with the date included.
-
-Your last scan and graph settings are saved automatically. Photos stay on your computer and are never changed or uploaded. Photos without EXIF camera metadata are skipped.
-
-Supports JPEG, TIFF, PNG, WebP, HEIC/HEIF, and many RAW formats.
-
-## For developers
-
-See the [build instructions and detailed guide](docs/DEVELOPMENT.md).
