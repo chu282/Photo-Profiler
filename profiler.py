@@ -5,6 +5,7 @@ from bisect import bisect_left, bisect_right
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from fractions import Fraction
 import logging
 import math
 import os
@@ -48,14 +49,19 @@ class Result:
     cancelled: bool = False
 
 
-def positive(value) -> float | None:
+def numeric(value) -> float | None:
     try:
         if isinstance(value, (list, tuple)):
             value = value[0]
-        result = float(value)
-        return result if math.isfinite(result) and result > 0 else None
+        result = float(Fraction(value.strip())) if isinstance(value, str) and "/" in value else float(value)
+        return result if math.isfinite(result) else None
     except (TypeError, ValueError, ZeroDivisionError, OverflowError, IndexError):
         return None
+
+
+def positive(value) -> float | None:
+    result = numeric(value)
+    return result if result is not None and result > 0 else None
 
 
 def capture_date(values) -> datetime | None:
@@ -121,6 +127,7 @@ def read_photo(path: Path) -> Photo | None:
         "Focal length": tag("EXIF FocalLength"),
         "Focal length (35mm)": tag("EXIF FocalLengthIn35mmFilm"),
     }
+    apex_values = {"Aperture": tag("EXIF ApertureValue"), "Shutter speed": tag("EXIF ShutterSpeedValue")}
     dates = [tag("EXIF DateTimeOriginal"), tag("EXIF DateTimeDigitized"), tag("Image DateTime")]
     # Pillow also covers EXIF containers that the metadata-only parser may miss.
     try:
@@ -131,8 +138,13 @@ def read_photo(path: Path) -> Photo | None:
                 camera_model = camera_model or str(exif.get(272) or "").strip().strip("\x00").strip()
                 nested = exif.get_ifd(0x8769)
                 for name, key in (("Aperture", 33437), ("Shutter speed", 33434), ("ISO", 34855), ("Focal length", 37386), ("Focal length (35mm)", 41989)):
-                    if raw_values[name] is None:
-                        raw_values[name] = nested.get(key, exif.get(key))
+                    if positive(raw_values[name]) is None:
+                        alternate = nested.get(key, exif.get(key))
+                        if positive(alternate) is not None:
+                            raw_values[name] = alternate
+                for name, key in (("Aperture", 37378), ("Shutter speed", 37377)):
+                    if numeric(apex_values[name]) is None:
+                        apex_values[name] = nested.get(key, exif.get(key))
                 dates = [dates[0], nested.get(36867), exif.get(36867), dates[1], nested.get(36868), dates[2], exif.get(306)]
                 orientation = orientation or positive(exif.get(274))
             has_exif = bool(tags) or bool(exif)
@@ -153,12 +165,16 @@ def read_photo(path: Path) -> Photo | None:
         if number is not None:
             values[name] = number
     # APEX tags are fallbacks for cameras that omit FNumber or ExposureTime.
-    for name, apex, factor in (("Aperture", tag("EXIF ApertureValue"), 0.5), ("Shutter speed", tag("EXIF ShutterSpeedValue"), -1)):
+    shutter_source = "ExposureTime" if "Shutter speed" in values else None
+    for name, factor in (("Aperture", 0.5), ("Shutter speed", -1)):
+        apex = numeric(apex_values[name])
         if name not in values and apex is not None:
             try:
                 number = positive(2 ** (float(apex) * factor))
                 if number is not None:
                     values[name] = number
+                    if name == "Shutter speed":
+                        shutter_source = "ShutterSpeedValue (APEX)"
             except (TypeError, ValueError, OverflowError):
                 pass
     if width and height:
@@ -169,6 +185,8 @@ def read_photo(path: Path) -> Photo | None:
         if ratio:
             values["Aspect ratio"] = ratio
     metadata = {"camera": camera_model, "aspect_checked": "1"}
+    if shutter_source:
+        metadata["shutter_source"] = shutter_source
     if "Focal length (35mm)" in values:
         metadata["equivalent_source"] = "EXIF"
     elif "Focal length" in values:
@@ -237,12 +255,17 @@ def label(metric: str, value) -> str:
     if metric == "Aperture":
         return f"f/{value:g}"
     if metric == "Shutter speed":
-        if value < 1:
-            return f"1/{1 / value:.4g} s"
-        return f"{value:.4g} s"
+        if 0 < value < 1:
+            return f"1/{plain_decimal(1 / value)} s"
+        return f"{plain_decimal(value)} s"
     if metric == "Focal length":
         return f"{value:g} mm"
     return f"{value:g}"
+
+
+def plain_decimal(value):
+    # Fixed notation keeps short exposures readable as 1/16000, never 1/1.6e+04.
+    return f"{value:.4f}".rstrip("0").rstrip(".") or "0"
 
 
 def distribution_key(value, bin_width=None):

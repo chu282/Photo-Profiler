@@ -1,6 +1,6 @@
 # Photo Profiler: development and detailed guide
 
-Run **Photo Profiler Setup 1.13.exe** in `dist` to install for your Windows account. It creates a Start menu shortcut and an uninstaller; a desktop shortcut is optional. No Python installation is required. For portable use, copy the entire `dist\Photo Profiler` folder and run its **Photo Profiler.exe**; keep its `_internal` folder beside it.
+Run **Photo Profiler Setup 1.14.exe** in `dist` to install for your Windows account. It creates a Start menu shortcut and an uninstaller; a desktop shortcut is optional. No Python installation is required. For portable use, copy the entire `dist\Photo Profiler` folder and run its **Photo Profiler.exe**; keep its `_internal` folder beside it.
 
 The installed app now runs as a single process, without the extra background wrapper used in earlier releases. A second launch activates the existing copy of that installation. Updates request a normal close and save the current session before replacing files. A small installer helper clears stuck processes from older versions only when their executable path exactly matches the installation being updated; other applications and portable copies are left alone. Session data remains in the same location.
 
@@ -32,6 +32,8 @@ After a scan and on close, the app saves results, folders, selected graphs, filt
 No photos are modified or uploaded. Overlapping folders are scanned once. Stop keeps partial results. Files without EXIF are ignored; missing settings are omitted only from the relevant graph. Undated photos count in distributions but not time graphs. The status reports skipped files; **Details** lists read errors.
 
 Orientation means landscape, portrait, or square after EXIF rotation. Focal length defaults to actual lens focal length. Shutter speed is measured in seconds. Time graphs use local capture dates from EXIF (original, digitized, then image date), never file modification dates.
+
+Shutter speed prefers a valid EXIF ExposureTime from either metadata reader. ShutterSpeedValue (APEX) is used only when ExposureTime is unavailable or invalid. The recorded exposure is preserved, including nonstandard speeds; labels use full decimal numbers, never scientific notation. Rescan to apply metadata-reading fixes to a saved scan.
 
 The optional line is a photo-weighted arithmetic mean over the current calendar day and preceding N−1 days, sampled daily. It uses the original values even with a logarithmic axis. Empty windows break the line. Orientation is categorical and has no average line. Histories longer than 4,000 days are sampled at up to 4,000 dates. Coincident points share a visible dot, but every photo contributes to counts and averages.
 
