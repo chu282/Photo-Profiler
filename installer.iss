@@ -32,6 +32,7 @@ Source: "build\update\PhotoProfilerUpdate.exe"; Flags: dontcopy
 Source: "dist\Photo Profiler\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "docs\DEVELOPMENT.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 
 #ifndef TestInstall
 [Icons]
